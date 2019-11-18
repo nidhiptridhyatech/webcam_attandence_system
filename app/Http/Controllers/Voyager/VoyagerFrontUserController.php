@@ -16,9 +16,8 @@ use TCG\Voyager\Events\BreadDataUpdated;
 use TCG\Voyager\Events\BreadImagesDeleted;
 use TCG\Voyager\Facades\Voyager;
 use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
-use App\User;
 
-class VoyagerUserController extends VoyagerBaseController
+class VoyagerFrontUserController extends VoyagerBaseController
 {
     use BreadRelationshipParser;
 
@@ -166,7 +165,7 @@ class VoyagerUserController extends VoyagerBaseController
         if (view()->exists("voyager::$slug.browse")) {
             $view = "voyager::$slug.browse";
         }
-        
+
         $authId = Auth::user()->id;
         $sqlQuery = "select  id from (select * from users) users,(select @pv := $authId)
                     initialisation where   find_in_set(parent_id, @pv) and 
@@ -174,7 +173,7 @@ class VoyagerUserController extends VoyagerBaseController
         $results = DB::select(DB::raw($sqlQuery));
         $results = array_map('current', $results);
         array_push($results, Auth::user()->id);
-        
+
         return Voyager::view($view, compact(
             'actions',
             'dataType',
@@ -306,11 +305,11 @@ class VoyagerUserController extends VoyagerBaseController
         if (view()->exists("voyager::$slug.edit-add")) {
             $view = "voyager::$slug.edit-add";
         }
-        $users = User::all();
 
-        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable','users'));
+        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable'));
     }
 
+    // POST BR(E)AD
     public function update(Request $request, $id)
     {
         $slug = $this->getSlug($request);
@@ -346,7 +345,7 @@ class VoyagerUserController extends VoyagerBaseController
         }
 
         return $redirect->with([
-            'message'    => __('voyager::generic.successfully_updated')." Organization",
+            'message'    => __('voyager::generic.successfully_updated')." {$dataType->getTranslatedAttribute('display_name_singular')}",
             'alert-type' => 'success',
         ]);
     }
@@ -393,8 +392,7 @@ class VoyagerUserController extends VoyagerBaseController
             $view = "voyager::$slug.edit-add";
         }
 
-        $users = User::all();
-        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable','users'));
+        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable'));
     }
 
     /**
@@ -427,7 +425,7 @@ class VoyagerUserController extends VoyagerBaseController
             }
 
             return $redirect->with([
-                    'message'    => __('voyager::generic.successfully_added_new')." Organization",
+                    'message'    => __('voyager::generic.successfully_added_new')." {$dataType->getTranslatedAttribute('display_name_singular')}",
                     'alert-type' => 'success',
                 ]);
         } else {
@@ -479,11 +477,11 @@ class VoyagerUserController extends VoyagerBaseController
         $res = $data->destroy($ids);
         $data = $res
             ? [
-                'message'    => __('voyager::generic.successfully_deleted')." Organization",
+                'message'    => __('voyager::generic.successfully_deleted')." {$displayName}",
                 'alert-type' => 'success',
             ]
             : [
-                'message'    => __('voyager::generic.error_deleting')." Organization",
+                'message'    => __('voyager::generic.error_deleting')." {$displayName}",
                 'alert-type' => 'error',
             ];
 
