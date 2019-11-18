@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
+use Carbon\Carbon;
 use Validator;
 use App\FrontUser;
 use App\Attendance;
@@ -20,9 +21,13 @@ class AttendanceController extends Controller
             if ($validator->fails()) {
                 return redirect()->back()->withErrors(['image' => 'Please provide snapshot to make attendance.']);
             }
-            $frontUsers = FrontUser::where('deleted_at',NULL)->get()->toArray();
+            $frontUsers = FrontUser::select('front_users.*','geofences.latitude','geofences.longitude','geofences.radius')->where('front_users.deleted_at',NULL)->leftjoin('geofences','front_users.id','=','geofences.user_id')->get()->toArray();
+            
             if(!empty($frontUsers))
             {
+                $login_latitude = $_POST['login_lati'];
+                $login_longitude = $_POST['login_long'];
+                //echo $login_latitude.'<br>'.$login_longitude;exit;
                 $img = $_POST['image'];
                 $webcam_path = "images/webcam/login/";
                 $folderPath = public_path($webcam_path);
@@ -52,12 +57,31 @@ class AttendanceController extends Controller
                     $is_verified = $this->verifyFaces($login_face_id,$front_face_id);
                     if($is_verified == true)
                     {
-                        $user_verified = 1;
-                        //make attendance logic 
-                        $attendance = Attendance::create([
-                            'front_user_id' => $fuser['id'],
-                        ]);
-                        return redirect()->back()->withSuccess('your attendance has been made successfully!');
+                        $geofence_latitude = $fuser['latitude'];
+                        $geofence_longitude = $fuser['longitude'];
+                        $login_radius = $this->getDistance($login_latitude,$login_longitude,$geofence_latitude,$geofence_longitude);
+                        if($login_radius<=$fuser['radius'])
+                        {
+                            
+                            $existing_attendance = Attendance::where('front_user_id',$fuser['id'])->whereDate('created_at', '=', date('Y-m-d'))->count();
+                            if($existing_attendance > 0)
+                            {
+                                return redirect()->back()->with('info', 'Your attendance for today has already been made.');            
+                            }
+                            else
+                            {
+                                $user_verified = 1;
+                                //make attendance logic 
+                                $attendance = Attendance::create([
+                                    'front_user_id' => $fuser['id'],
+                                ]);
+                                return redirect()->back()->withSuccess('your attendance has been made successfully!');
+                            }
+                            
+                        }
+                        else{
+                            return redirect()->back()->withErrors(['image' => 'You can not make attendance from this location.']);            
+                        }
                     }
                    }
                } 
@@ -100,6 +124,7 @@ class AttendanceController extends Controller
     }
     public function verifyFaces($login_face_id,$front_user_face_id)
     {
+        $verified = false;
         $headers = [
             'Content-Type' => 'application/json',
             'Ocp-Apim-Subscription-Key' => config('faceapi.subscription_key'),
@@ -135,6 +160,18 @@ class AttendanceController extends Controller
 
         return $verified;
     }
+    function getDistance($latitude1, $longitude1, $latitude2, $longitude2) {  
+        $earth_radius = 6371;  
+          
+        $dLat = deg2rad($latitude2 - $latitude1);  
+        $dLon = deg2rad($longitude2 - $longitude1);  
+          
+        $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($latitude1)) * cos(deg2rad($latitude2)) * sin($dLon/2) * sin($dLon/2);  
+        $c = 2 * asin(sqrt($a));  
+        $d = $earth_radius * $c;  
+        //echo $d;exit;  
+        return $d;  
+    }  
     public function getUserLocation(Request $request)
     {
         if(!empty($_POST['latitude']) && !empty($_POST['longitude'])){ 

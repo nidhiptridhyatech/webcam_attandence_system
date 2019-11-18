@@ -86,15 +86,20 @@ function saveSnap(){
                 <div class="card-body">
                     <form method="POST" action="{{ route('make-attendance') }}" enctype="multipart/form-data">
                         @csrf
+                        @if(session()->has('info'))
+                            <div class="alert alert-warning">
+                            <strong>Info!</strong> {{ session()->get('info') }}
+                            </div>
+                        @endif
                         @if(session('success'))
-                        <div class="alert alert-success">
-                        <strong>Success!</strong> {{session('success')}}
-                        </div>
+                            <div class="alert alert-success">
+                            <strong>Success!</strong> {{session('success')}}
+                            </div>
                         @endif
                         @error('image')
-                        <div class="alert alert-danger">
-                        <strong>Sorry!</strong> {{ $message }}
-                        </div>
+                            <div class="alert alert-danger">
+                            <strong>Sorry!</strong> {{ $message }}
+                            </div>
                         @enderror
                         <div class="form-group row">
                             <label for="snap" class="col-md-4 col-form-label text-md-right">{{ __('Take Snapshot') }}</label>
