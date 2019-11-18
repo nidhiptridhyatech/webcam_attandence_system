@@ -37,6 +37,7 @@ class AttendanceController extends Controller
                 file_put_contents($file, $image_base64);
                 $avatar = $webcam_path.$fileName;
                 $avatar_url = url('/'.$avatar);
+                $is_verified = false;
                 $user_verified = 0;
                foreach($frontUsers as $f=>$fuser)
                {
@@ -56,13 +57,14 @@ class AttendanceController extends Controller
                         $attendance = Attendance::create([
                             'front_user_id' => $fuser['id'],
                         ]);
+                        return redirect()->back()->withSuccess('your attendance has been made successfully!');
                     }
                    }
                } 
                if($user_verified == 0)
                {
                    //remove uploaded image from login attempt 
-                   return redirect()->back()->withErrors(['image' => 'Sorry, Face not verified! Please try again.']);   
+                   return redirect()->back()->withErrors(['image' => 'Face not verified! Please try again.']);   
                }
             }
             }
@@ -92,7 +94,7 @@ class AttendanceController extends Controller
         }
         catch (\Exception $ex)
         {
-        return redirect()->back()->withErrors(['image' => 'Sorry, Face not identified! Please try again.']);
+        return redirect()->back()->withErrors(['image' => 'Face not identified! Please try again.']);
         }
         return $face_id;
     }
@@ -128,7 +130,7 @@ class AttendanceController extends Controller
         }
         catch (\Exception $ex)
         {
-        return redirect()->back()->withErrors(['image' => 'Sorry, Face not identified! Please try again.']);
+        return redirect()->back()->withErrors(['image' => 'Face not identified! Please try again.']);
         }
 
         return $verified;
