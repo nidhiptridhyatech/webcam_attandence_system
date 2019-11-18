@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use Validator;
 use App\FrontUser;
+use App\Attendance;
 
 class AttendanceController extends Controller
 {
@@ -36,6 +37,7 @@ class AttendanceController extends Controller
                 file_put_contents($file, $image_base64);
                 $avatar = $webcam_path.$fileName;
                 $avatar_url = url('/'.$avatar);
+                $user_verified = 0;
                foreach($frontUsers as $f=>$fuser)
                {
                    if(isset($fuser['avatar']))
@@ -49,22 +51,19 @@ class AttendanceController extends Controller
                     $is_verified = $this->verifyFaces($login_face_id,$front_face_id);
                     if($is_verified == true)
                     {
-                        //make attendance logic (user_id, lati,long,address,face_url,created_at,updated_at,deleted_at)
-                        // $user = User::create([
-                        //     'name' => $data['name'],
-                        //     'email' => $data['email'],
-                        //     'password' => Hash::make($data['password']),
-                        //     'avatar' => $avatar,
-                        //     'face_id' => $face_id,
-                        // ]);
-
-                    }
-                    else{
-                        //remove uploaded image from login attempt 
-                        return redirect()->back()->withErrors(['image' => 'Sorry, Face not verified! Please try again.']);   
+                        $user_verified = 1;
+                        //make attendance logic 
+                        $attendance = Attendance::create([
+                            'front_user_id' => $fuser['id'],
+                        ]);
                     }
                    }
                } 
+               if($user_verified == 0)
+               {
+                   //remove uploaded image from login attempt 
+                   return redirect()->back()->withErrors(['image' => 'Sorry, Face not verified! Please try again.']);   
+               }
             }
             }
             return view("attendance");
