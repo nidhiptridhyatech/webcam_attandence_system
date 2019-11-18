@@ -46,6 +46,11 @@ class AttendanceController extends Controller
                 $user_verified = 0;
                foreach($frontUsers as $f=>$fuser)
                {
+                    $existing_attendance = Attendance::where('front_user_id',$fuser['id'])->whereDate('created_at', '=', date('Y-m-d'))->count();
+                    if($existing_attendance > 0)
+                    {
+                        return redirect()->back()->with('info', 'Your attendance for today has already been made.');            
+                    }
                    if(isset($fuser['avatar']))
                    {
                     // $login_face_url = "https://content-static.upwork.com/uploads/2014/10/01073427/profilephoto1.jpg";
@@ -62,22 +67,12 @@ class AttendanceController extends Controller
                         $login_radius = $this->getDistance($login_latitude,$login_longitude,$geofence_latitude,$geofence_longitude);
                         if($login_radius<=$fuser['radius'])
                         {
-                            
-                            $existing_attendance = Attendance::where('front_user_id',$fuser['id'])->whereDate('created_at', '=', date('Y-m-d'))->count();
-                            if($existing_attendance > 0)
-                            {
-                                return redirect()->back()->with('info', 'Your attendance for today has already been made.');            
-                            }
-                            else
-                            {
-                                $user_verified = 1;
-                                //make attendance logic 
-                                $attendance = Attendance::create([
-                                    'front_user_id' => $fuser['id'],
-                                ]);
-                                return redirect()->back()->withSuccess('your attendance has been made successfully!');
-                            }
-                            
+                            $user_verified = 1;
+                            //make attendance logic 
+                            $attendance = Attendance::create([
+                                'front_user_id' => $fuser['id'],
+                            ]);
+                            return redirect()->back()->withSuccess('your attendance has been made successfully!');
                         }
                         else{
                             return redirect()->back()->withErrors(['image' => 'You can not make attendance from this location.']);            
