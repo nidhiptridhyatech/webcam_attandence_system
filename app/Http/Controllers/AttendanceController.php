@@ -22,8 +22,8 @@ class AttendanceController extends Controller
             if ($validator->fails()) {
                 return redirect()->back()->withErrors(['image' => 'Please provide snapshot to make attendance.']);
             }
-            $frontUsers = FrontUser::select('front_users.*','geofences.latitude','geofences.longitude','geofences.radius')->where('front_users.deleted_at',NULL)->leftjoin('geofences','front_users.id','=','geofences.user_id')->get()->toArray();
-            
+            $frontUsers = FrontUser::select('front_users.*','geofences.latitude','geofences.longitude','geofences.radius')->where('front_users.deleted_at',NULL)->leftjoin('geofences','front_users.geofence_id','=','geofences.id')->get()->toArray();
+            //print"<pre>";print_r($frontUsers);exit;
             if(!empty($frontUsers))
             {
                 $login_latitude = $_POST['login_lati'];
