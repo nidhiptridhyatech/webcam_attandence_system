@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Validator;
 use App\FrontUser;
 use App\Attendance;
+use File;
 
 class AttendanceController extends Controller
 {
@@ -27,6 +28,7 @@ class AttendanceController extends Controller
             {
                 $login_latitude = $_POST['login_lati'];
                 $login_longitude = $_POST['login_long'];
+                //$login_address = $this->getUserLocation($login_latitude,$login_longitude);
                 //echo $login_latitude.'<br>'.$login_longitude;exit;
                 $img = $_POST['image'];
                 $webcam_path = "images/webcam/login/";
@@ -49,33 +51,41 @@ class AttendanceController extends Controller
                     $existing_attendance = Attendance::where('front_user_id',$fuser['id'])->whereDate('created_at', '=', date('Y-m-d'))->count();
                     if($existing_attendance > 0)
                     {
-                        return redirect()->back()->with('info', 'Your attendance for today has already been made.');            
+                        return redirect()->back()->with('info', $fuser['first_name'].' '.$fuser['last_name'].', Your attendance for today has already been made.');            
                     }
-                   if(isset($fuser['avatar']))
-                   {
+                    
+                    if(isset($fuser['avatar']))
+                    {
                     // $login_face_url = "https://content-static.upwork.com/uploads/2014/10/01073427/profilephoto1.jpg";
                     // $front_face_url = "https://content-static.upwork.com/uploads/2014/10/01073427/profilephoto1.jpg";     
                     $login_face_url = $avatar_url;
                     $front_face_url = url('/storage/'.$fuser['avatar']);
                     $login_face_id = $this->getFaceIdFromImage($login_face_url);
                     $front_face_id = $this->getFaceIdFromImage($front_face_url);
+                    
                     $is_verified = $this->verifyFaces($login_face_id,$front_face_id);
                     if($is_verified == true)
                     {
-                        $geofence_latitude = $fuser['latitude'];
-                        $geofence_longitude = $fuser['longitude'];
-                        $login_radius = $this->getDistance($login_latitude,$login_longitude,$geofence_latitude,$geofence_longitude);
-                        if($login_radius<=$fuser['radius'])
+                        $user_verified = 1;
+                        if(isset($fuser['latitude']) && isset($fuser['longitude']))
                         {
-                            $user_verified = 1;
+                            $radius = isset($fuser['radius'])?$fuser['radius']:setting('site.allowed_radius');
+                            $geofence_latitude = $fuser['latitude'];
+                            $geofence_longitude = $fuser['longitude'];
+                            $login_radius = $this->getDistance($login_latitude,$login_longitude,$geofence_latitude,$geofence_longitude);
+                            if($login_radius>$radius)
+                            {
+                                $user_verified = 0;
+                                return redirect()->back()->withErrors(['image' => 'You can not make attendance from this location.']);            
+                            }
+                        }
+                        if($user_verified == 1)
+                        {
                             //make attendance logic 
                             $attendance = Attendance::create([
                                 'front_user_id' => $fuser['id'],
                             ]);
-                            return redirect()->back()->withSuccess('your attendance has been made successfully!');
-                        }
-                        else{
-                            return redirect()->back()->withErrors(['image' => 'You can not make attendance from this location.']);            
+                            return redirect()->back()->withSuccess($fuser['first_name'].' '.$fuser['last_name'].', your attendance has been made successfully!');
                         }
                     }
                    }
@@ -83,6 +93,10 @@ class AttendanceController extends Controller
                if($user_verified == 0)
                {
                    //remove uploaded image from login attempt 
+                    $image_path = $avatar;  
+                    if(File::exists($image_path)) {
+                    File::delete($image_path);
+                    }
                    return redirect()->back()->withErrors(['image' => 'Face not verified! Please try again.']);   
                }
             }
@@ -113,7 +127,7 @@ class AttendanceController extends Controller
         }
         catch (\Exception $ex)
         {
-        return redirect()->back()->withErrors(['image' => 'Face not identified! Please try again.']);
+            $face_id = 0;
         }
         return $face_id;
     }
@@ -150,7 +164,7 @@ class AttendanceController extends Controller
         }
         catch (\Exception $ex)
         {
-        return redirect()->back()->withErrors(['image' => 'Face not identified! Please try again.']);
+            $verified = false;
         }
 
         return $verified;
@@ -164,14 +178,14 @@ class AttendanceController extends Controller
         $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($latitude1)) * cos(deg2rad($latitude2)) * sin($dLon/2) * sin($dLon/2);  
         $c = 2 * asin(sqrt($a));  
         $d = $earth_radius * $c;  
-        //echo $d;exit;  
+        
         return $d;  
     }  
-    public function getUserLocation(Request $request)
+    public function getUserLocation($latitude,$longitude)
     {
-        if(!empty($_POST['latitude']) && !empty($_POST['longitude'])){ 
+        if(!empty($latitude) && !empty($longitude)){ 
             //Send request and receive json data by latitude and longitude 
-            $url = 'http://maps.googleapis.com/maps/api/geocode/json?latlng='.trim($_POST['latitude']).','.trim($_POST['longitude']).'&sensor=false'; 
+            $url = 'http://maps.googleapis.com/maps/api/geocode/json?latlng='.trim($latitude).','.trim($longitude).'&sensor=false'; 
             $json = @file_get_contents($url); 
             $data = json_decode($json); 
             $status = $data->status; 
@@ -182,7 +196,7 @@ class AttendanceController extends Controller
                 $location =  ''; 
             } 
             //Print address 
-            echo $location; 
+            //print_r($data); exit;
         } 
     }
 }
