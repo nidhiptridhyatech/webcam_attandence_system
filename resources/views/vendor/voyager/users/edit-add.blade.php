@@ -104,6 +104,21 @@
                                     @include('voyager::formfields.relationship')
                                 </div> -->
                             @endcan
+                            @php 
+                                $ssMasterArray = ['level_1' => 'Level 1', 'level_2'=> 'Level 2', 'level_3' => 'Level 3','level_4' => 'Level 4',
+                                'level_5' => 'Level 5'];
+                                
+                            @endphp
+                            <div class="form-group">
+                                <label for="default_role">Security Strength Master</label>
+                                <select class="form-control select2-ajax select2-hidden-accessible security_strength_master" name="security_strength_master" tabindex="-1">
+                                        <option value="" >None</option>
+                                    @foreach($ssMasterArray as $key => $value)
+                                        <option value="{{$key}}"@if($dataTypeContent->security_strength_master == $key)selected @endif>{{$value}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
                             @php
                             if (isset($dataTypeContent->locale)) {
                                 $selected_locale = $dataTypeContent->locale;
@@ -157,6 +172,7 @@
     <script>
         $('document').ready(function () {
             $(".parent_id").select2({});
+            $(".security_strength_master").select2({});
             $('.toggleswitch').bootstrapToggle();
         });
     </script>

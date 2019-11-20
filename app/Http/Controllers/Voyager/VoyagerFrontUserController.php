@@ -16,6 +16,8 @@ use TCG\Voyager\Events\BreadDataUpdated;
 use TCG\Voyager\Events\BreadImagesDeleted;
 use TCG\Voyager\Facades\Voyager;
 use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
+use Illuminate\Validation\Rule;
+use App\Rules\fileCheck;
 
 class VoyagerFrontUserController extends VoyagerBaseController
 {
@@ -312,6 +314,7 @@ class VoyagerFrontUserController extends VoyagerBaseController
     // POST BR(E)AD
     public function update(Request $request, $id)
     {
+        $this->rules($request,$id); 
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -365,6 +368,7 @@ class VoyagerFrontUserController extends VoyagerBaseController
 
     public function create(Request $request)
     {
+
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -404,6 +408,7 @@ class VoyagerFrontUserController extends VoyagerBaseController
      */
     public function store(Request $request)
     {
+        $this->rules($request); 
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -881,5 +886,18 @@ class VoyagerFrontUserController extends VoyagerBaseController
 
         // No result found, return empty array
         return response()->json([], 404);
+    }
+
+    public static function rules(Request $request, $id= Null) {
+        return $request->validate([
+            'phone_number' => 'required|max:10|min:10|unique:front_users,phone_number,'.$id,
+            'voice_audio' => ['required',new fileCheck($request->all()),'max:2048'],
+        ],
+        [
+            'phone_number.required' => 'Phone Number is Required',
+            'phone_number.max' => 'Phone Number may not be greater than 10 characters.',
+            'phone_number.min' => 'Phone Number must be at least 10 characters.',
+            'phone_number.unique' => 'Phone Number is Unique',
+        ]);
     }
 }

@@ -14,14 +14,26 @@ class UpdateUsersTable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->integer('role_id')->nullable(true);
-            $table->integer('parent_id')->nullable(true);
-            $table->string('avatar')->nullable(true);
-            $table->string('first_name')->nullable(true);
-            $table->string('last_name')->nullable(true);
-            $table->string('phone_number')->nullable(true);
-           
+            if (!Schema::hasColumn('users','role_id')) {
+                $table->integer('role_id')->nullable(true);
+            }
+            if (!Schema::hasColumn('users','parent_id')) {
+                $table->integer('parent_id')->nullable(true);
+            }
+            if (!Schema::hasColumn('users','avatar')) {
+                $table->string('avatar')->nullable(true);
+            }
+            if (!Schema::hasColumn('users','first_name')) {
+                $table->string('first_name')->nullable(true);
+            }
+            if (!Schema::hasColumn('users','last_name')) {
+                $table->string('last_name')->nullable(true);
+            }
+            if (!Schema::hasColumn('users','phone_number')) {
+                $table->string('phone_number')->nullable(true);
+            }
         });
+       
     }
 
     /**

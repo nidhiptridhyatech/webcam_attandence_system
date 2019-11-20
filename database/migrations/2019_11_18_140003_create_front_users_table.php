@@ -13,17 +13,19 @@ class CreateFrontUsersTable extends Migration
      */
     public function up()
     {
-        Schema::create('front_users', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->integer('parent_id')->nullable(true);
-            $table->string('first_name')->nullable(true);
-            $table->string('last_name')->nullable(true);
-            $table->string('phone_number')->nullable(true);
-            $table->string('avatar')->nullable(true);
-            $table->integer('geofence_id')->nullable(true);
-            $table->timestamps();
-            $table->softDeletes();
-        });
+        if (!Schema::hasTable('front_users')) {
+            Schema::create('front_users', function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->integer('parent_id')->nullable(true);
+                $table->string('first_name')->nullable(true);
+                $table->string('last_name')->nullable(true);
+                $table->string('phone_number')->nullable(true);
+                $table->string('avatar')->nullable(true);
+                $table->integer('geofence_id')->nullable(true);
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
     }
 
     /**

@@ -13,16 +13,18 @@ class CreateGeofencesTable extends Migration
      */
     public function up()
     {
-        Schema::create('geofences', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->integer('user_id')->nullable(true);
-            $table->string('address')->nullable(true);
-            $table->double('latitude')->nullable(true);
-            $table->double('longitude')->nullable(true);
-            $table->integer('radius')->nullable(true);
-            $table->timestamps();
-            $table->softDeletes();
-        });
+        if (!Schema::hasTable('geofences')) {
+            Schema::create('geofences', function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->integer('user_id')->nullable(true);
+                $table->string('address')->nullable(true);
+                $table->double('latitude')->nullable(true);
+                $table->double('longitude')->nullable(true);
+                $table->integer('radius')->nullable(true);
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
     }
 
     /**
