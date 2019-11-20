@@ -16,9 +16,6 @@ class CreateAttendancesTable extends Migration
         Schema::create('attendances', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->integer('front_user_id');
-            //$table->double('latitude');
-            //$table->double('longitude');
-            //$table->text('address');
             $table->timestamps();
         });
     }

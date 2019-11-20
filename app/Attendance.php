@@ -12,6 +12,6 @@ class Attendance extends Model
      * @var array
      */
     protected $fillable = [
-        'front_user_id',
+        'front_user_id','login_latitude','login_longitude','login_address','login_image',
     ];
 }

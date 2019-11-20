@@ -28,7 +28,7 @@ class AttendanceController extends Controller
             {
                 $login_latitude = $_POST['login_lati'];
                 $login_longitude = $_POST['login_long'];
-                //$login_address = $this->getUserLocation($login_latitude,$login_longitude);
+                $login_address = $this->getUserLocation($login_latitude,$login_longitude);
                 //echo $login_latitude.'<br>'.$login_longitude;exit;
                 $img = $_POST['image'];
                 $webcam_path = "images/webcam/login/";
@@ -84,6 +84,10 @@ class AttendanceController extends Controller
                             //make attendance logic 
                             $attendance = Attendance::create([
                                 'front_user_id' => $fuser['id'],
+                                'login_latitude' => $login_latitude,
+                                'login_longitude' => $login_longitude,
+                                'login_address' => $login_address,
+                                'login_image' => $avatar,
                             ]);
                             return redirect()->back()->withSuccess($fuser['first_name'].' '.$fuser['last_name'].', your attendance has been made successfully!');
                         }
@@ -185,7 +189,7 @@ class AttendanceController extends Controller
     {
         if(!empty($latitude) && !empty($longitude)){ 
             //Send request and receive json data by latitude and longitude 
-            $url = 'http://maps.googleapis.com/maps/api/geocode/json?latlng='.trim($latitude).','.trim($longitude).'&sensor=false'; 
+            $url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng='.trim($latitude).','.trim($longitude).'&sensor=false&key=AIzaSyBtWnExOjgjgPQRyVXZ1E0AvvSj75Y5Ods'; 
             $json = @file_get_contents($url); 
             $data = json_decode($json); 
             $status = $data->status; 
@@ -196,7 +200,8 @@ class AttendanceController extends Controller
                 $location =  ''; 
             } 
             //Print address 
-            //print_r($data); exit;
+            return $location;
+            //print"<pre>";print_r($location); exit;
         } 
     }
 }
