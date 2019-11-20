@@ -26,11 +26,20 @@ class fileCheck implements Rule
     public function passes($attribute, $value)
     {
         $allowedExts = array("mp4");
-        $extension = $value->getClientOriginalExtension();
+        $maxSize = 1500000;
+        $extension = $value[0]->getClientOriginalExtension();
+        $size = $value[0]->getSize();
 
         $videoFormatCheck = (in_array($extension, $allowedExts)) ? true : false;
+        $videoSizeCheck = ($size <= $maxSize) ? true : false;
 
-        return $videoFormatCheck;
+        if($videoFormatCheck == true && $videoSizeCheck == true){
+            $fileCheck = true;
+        }else{
+            $fileCheck = false;
+        }
+        
+        return $fileCheck;
     }
 
     /**
@@ -40,6 +49,6 @@ class fileCheck implements Rule
      */
     public function message()
     {
-        return 'The File must in mp4 file.';
+        return 'The File must in mp4 file & less then 1Mb.';
     }
 }

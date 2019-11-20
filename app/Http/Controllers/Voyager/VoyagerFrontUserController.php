@@ -891,7 +891,7 @@ class VoyagerFrontUserController extends VoyagerBaseController
     public static function rules(Request $request, $id= Null) {
         return $request->validate([
             'phone_number' => 'required|max:10|min:10|unique:front_users,phone_number,'.$id,
-            'voice_audio' => ['required',new fileCheck($request->all()),'max:2048'],
+            'voice_audio' => [new fileCheck($request->all())],
         ],
         [
             'phone_number.required' => 'Phone Number is Required',
