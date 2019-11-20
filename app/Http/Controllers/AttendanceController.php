@@ -204,4 +204,8 @@ class AttendanceController extends Controller
             //print"<pre>";print_r($location); exit;
         } 
     }
+
+    public function getAttendanceReport(){
+        echo"here";exit;
+    }
 }
