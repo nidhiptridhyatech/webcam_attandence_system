@@ -205,7 +205,4 @@ class AttendanceController extends Controller
         } 
     }
 
-    public function getAttendanceReport(){
-        echo"here";exit;
-    }
 }
