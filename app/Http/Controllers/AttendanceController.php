@@ -16,7 +16,27 @@ class AttendanceController extends Controller
     {
         if(isset($_POST['image']))
         {
+            $filename = public_path('login_audio/2019-11-26T10_47_49.389Z.wav');
+            
+            //echo $filename;exit;
+//             $fp=$d=$data=$format=$bit=$chn="0"; 
+// $fp = fopen($filename, 'rb'); fseek($fp, 20); $d = fread($fp, 18);
+
+// $data = unpack('vfmt/vch/Vsr/Vdr/vbs/vbis/vext', $d);  
+// $format = array(0x0001 => 'PCM',0x0003 => 'IEEE Float',0x0006 => 'A-LAW',0x0007 => 'MuLAW',0xFFFE => 'Extensible',);
+// $bit = rtrim($data['sr'],"0") * rtrim($data['dr'],"0");  
+// $chn = ($data['ch'] = 1) ? "Mono" : "Stereo"; 
+// fclose($fp); 
+// print_r($data);exit;
+//$handle = fopen($filename, 'rb');
+//$binary_content = fread( $handle,  filesize($filename) );
+//fclose($fp);
+$binary_content = file_get_contents($filename, true);
+//'8553ae7a-b83e-4382-83d9-668d577b3701';
+$this->verifyVoice($binary_content);exit;
+//print_r( $binary_content );exit;
             $validator = Validator::make($request->all(), [
+                'phone_number' => ['required|numeric|size:10'],
                 'image' => ['required'],
             ]);
             if ($validator->fails()) {
@@ -203,5 +223,43 @@ class AttendanceController extends Controller
             return $location;
             //print"<pre>";print_r($location); exit;
         } 
+    }
+    public function verifyVoice($binary_data,$verification_id)
+    {
+        $verified = false;
+        $headers = [
+            'Content-Type' => 'application/octet-stream',
+            'Ocp-Apim-Subscription-Key' => '83ea574c33d9415abe0494c22f8a2583',
+        ];
+        $body = $binary_data;
+        $client = new Client([
+            'headers' => $headers
+        ]);
+        try
+        {
+            $res = $client->request('POST', 'https://westus.api.cognitive.microsoft.com/spid/v1.0/verificationProfiles/'.$verification_id.'/enroll', [
+                'body' => $body
+            ]);
+            
+            if ($res->getStatusCode() == 200) { // 200 OK
+                $response_data = json_decode($res->getBody()->getContents());
+                print"<pre>";print_r($response_data);exit;
+                if($response_data->isIdentical == 1 && $response_data->confidence >= 0.7)
+                {
+                    $verified = true;
+                }
+                else
+                {
+                    $verified = false;
+                }
+            }
+        }
+        catch (\Exception $ex)
+        {
+            print"<pre>";print_r($ex->getMessage());exit;
+            $verified = false;
+        }
+
+        return $verified;
     }
 }

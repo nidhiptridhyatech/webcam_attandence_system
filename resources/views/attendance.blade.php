@@ -10,9 +10,10 @@
 
     span.label{ font-weight: bold; color: #000;} 
 </style>
-
+<link rel="stylesheet" type="text/css" href="{{asset('css/recordstyle.css')}}">
 <script type="text/javascript" src="{{asset('js/webcamjs/webcam.min.js')}}"></script>    
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script> 
+
  <!-- Code to handle taking the snapshot and displaying it locally -->
  <script language="JavaScript">
  $(document).ready(function(){ 
@@ -102,6 +103,13 @@ function saveSnap(){
                             </div>
                         @enderror
                         <div class="form-group row">
+                            <label for="snap" class="col-md-4 col-form-label text-md-right">{{ __('Mobile No.') }}</label>
+
+                            <div class="col-md-6">
+                                <input type="number" name="phone_number" id="phone_number" required>
+                            </div>    
+                        </div>    
+                        <div class="form-group row">
                             <label for="snap" class="col-md-4 col-form-label text-md-right">{{ __('Take Snapshot') }}</label>
 
                             <div class="col-md-6">
@@ -127,10 +135,23 @@ function saveSnap(){
 
                             <div class="col-md-6">
                             <div id="results" ></div>
-                         </div>
-                         </div>                      
- 
- 
+                            </div>
+                         </div>   
+                         
+<div class="form-group row">
+                            <label for="snap" class="col-md-4 col-form-label text-md-right">{{ __('Record Voice') }}</label>
+
+                            <div class="col-md-6">
+<div id="controls">
+  	 <button onclick="startRecording()" type="button" id="recordButton">Record</button>
+  	 <button onclick="pauseRecording()" type="button" id="pauseButton" style="display:none" disabled>Pause</button>
+  	 <button onclick="stopRecording()" type="button" id="stopButton" disabled>Stop</button>
+    </div>
+    <!-- <div id="formats">Format: start recording to see sample rate</div> -->
+  	<span>(*The audio file should be at least 1-second-long and no longer than 15 seconds)</span>
+  	<ol id="recordingsList"></ol>
+</div>
+</div>
                         <div class="form-group row mb-0">
                             <div class="col-md-6 offset-md-4">
                             
@@ -145,6 +166,9 @@ function saveSnap(){
         </div>
     </div>
 </div>
-@endsection
+<!-- <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script> -->
+<script type="text/javascript" src="{{asset('js/recorder.js')}}"></script>
+<script type="text/javascript" src="{{asset('js/recordapp.js')}}"></script>    
 
+@endsection
 
