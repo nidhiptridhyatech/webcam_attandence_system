@@ -18,6 +18,7 @@ use TCG\Voyager\Facades\Voyager;
 use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
 use Illuminate\Validation\Rule;
 use App\Rules\fileCheck;
+use GuzzleHttp\Client;
 
 class VoyagerFrontUserController extends VoyagerBaseController
 {
@@ -417,7 +418,11 @@ class VoyagerFrontUserController extends VoyagerBaseController
         $this->authorize('add', app($dataType->model_name));
 
         // Validate fields with ajax
+        //print"<pre>";print_r($dataType->addRows);exit;
         $val = $this->validateBread($request->all(), $dataType->addRows)->validate();
+        $voice_profile_id = $this->createVoiceProfile();
+        $request->merge(array('voice_profile_id' => $voice_profile_id));
+        //echo $request->voice_profile_id;exit;
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
 
         event(new BreadDataAdded($dataType, $data));
@@ -899,5 +904,37 @@ class VoyagerFrontUserController extends VoyagerBaseController
             'phone_number.min' => 'Phone Number must be at least 10 characters.',
             'phone_number.unique' => 'Phone Number is Unique',
         ]);
+    }
+
+    public function createVoiceProfile()
+    {
+        $voice_verification_id = '';
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Ocp-Apim-Subscription-Key' => config('voiceapi.voice_subscription_key'),
+        ];
+        $body = '{
+            "locale":"en-us",
+          }';
+        $client = new Client([
+            'headers' => $headers
+        ]);
+        try
+        {
+            $res = $client->request('POST', config('voiceapi.voice_api_endpoint').'verificationProfiles', [
+                'body' => $body
+            ]);
+            
+            if ($res->getStatusCode() == 200) { // 200 OK
+                $response_data = json_decode($res->getBody()->getContents());
+                $voice_verification_id = $response_data->verificationProfileId;
+            }
+        }
+        catch (\Exception $ex)
+        {
+            print"<pre>";print_r($ex->getMessage());exit;   
+        }
+
+        return $voice_verification_id;
     }
 }

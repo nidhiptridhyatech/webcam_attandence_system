@@ -16,28 +16,14 @@ class AttendanceController extends Controller
     {
         if(isset($_POST['image']))
         {
-            $filename = public_path('login_audio/2019-11-26T10_47_49.389Z.wav');
-            
-            //echo $filename;exit;
-//             $fp=$d=$data=$format=$bit=$chn="0"; 
-// $fp = fopen($filename, 'rb'); fseek($fp, 20); $d = fread($fp, 18);
-
-// $data = unpack('vfmt/vch/Vsr/Vdr/vbs/vbis/vext', $d);  
-// $format = array(0x0001 => 'PCM',0x0003 => 'IEEE Float',0x0006 => 'A-LAW',0x0007 => 'MuLAW',0xFFFE => 'Extensible',);
-// $bit = rtrim($data['sr'],"0") * rtrim($data['dr'],"0");  
-// $chn = ($data['ch'] = 1) ? "Mono" : "Stereo"; 
-// fclose($fp); 
-// print_r($data);exit;
-//$handle = fopen($filename, 'rb');
-//$binary_content = fread( $handle,  filesize($filename) );
-//fclose($fp);
-$binary_content = file_get_contents($filename, true);
-//'8553ae7a-b83e-4382-83d9-668d577b3701';
-$this->verifyVoice($binary_content);exit;
-//print_r( $binary_content );exit;
+            //voice verification manual code
+            // $filename = public_path('login_audio/2019-11-26T10_47_49.389Z.wav');
+            // $binary_content = file_get_contents($filename, true);
+            // $this->verifyVoice($binary_content);exit;
+            //voice verification code end
             $validator = Validator::make($request->all(), [
-                'phone_number' => ['required|numeric|size:10'],
-                'image' => ['required'],
+               // 'phone_number' => 'required|numeric|size:10',
+                'image' => 'required',
             ]);
             if ($validator->fails()) {
                 return redirect()->back()->withErrors(['image' => 'Please provide snapshot to make attendance.']);
