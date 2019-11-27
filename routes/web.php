@@ -22,6 +22,7 @@ Route::get('/home', 'HomeController@index')->name('home');
 
 Route::group(['prefix' => 'admin'], function () {
     Voyager::routes();
+    
 });
 //Route::get('/make-attendance', 'AttendanceController@MakeAttendance')->name('make-attendance');
 Route::match(['get', 'post'],'/make-attendance', 'AttendanceController@MakeAttendance')->name('make-attendance');

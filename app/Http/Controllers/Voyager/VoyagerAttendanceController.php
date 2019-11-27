@@ -16,10 +16,10 @@ use TCG\Voyager\Events\BreadDataUpdated;
 use TCG\Voyager\Events\BreadImagesDeleted;
 use TCG\Voyager\Facades\Voyager;
 use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
-use Illuminate\Validation\Rule;
-use App\Rules\fileCheck;
+use App\FrontUser;
 
-class VoyagerFrontUserController extends VoyagerBaseController
+class VoyagerAttendanceController extends VoyagerBaseController
+
 {
     use BreadRelationshipParser;
 
@@ -34,7 +34,7 @@ class VoyagerFrontUserController extends VoyagerBaseController
     //      Browse our Data Type (B)READ
     //
     //****************************************
-   
+
     public function index(Request $request)
     {
         // GET THE SLUG, ex. 'posts', 'pages', etc.
@@ -105,7 +105,33 @@ class VoyagerFrontUserController extends VoyagerBaseController
             } else {
                 $dataTypeContent = call_user_func([$query->orderBy($model->getKeyName(), 'DESC'), $getter]);
             }
-
+            //Custom Filter Code Starts
+                if(!empty($request->front_user)) {
+                    $dataTypeContent = call_user_func([
+                        $query->where('front_user_id','=',$request->front_user)->orderBy('id','DESC'),
+                        $getter,
+                    ]);
+                }
+                if(!empty($request->start_date)) {
+                    $dataTypeContent = call_user_func([
+                        $query->where( function($data) use ($request){
+                            $data->where('attendances.created_at','>=',$request->start_date);
+                            $data->orWhere('attendances.updated_at','>=',$request->start_date);
+                        }),
+                        $getter,
+                    ]);
+                }
+                
+                if(!empty($request->end_date)) {
+                    $dataTypeContent = call_user_func([
+                        $query->where( function($data1) use ($request){
+                            $data1->where('attendances.created_at','<=',$request->end_date);
+                            $data1->orWhere('attendances.updated_at','<=',$request->end_date);
+                        }),
+                        $getter,
+                    ]);
+                }
+            //Custom Filter Code Ends
             // Replace relationships' keys for labels and create READ links if a slug is provided.
             $dataTypeContent = $this->resolveRelations($dataTypeContent, $dataType);
         } else {
@@ -163,19 +189,12 @@ class VoyagerFrontUserController extends VoyagerBaseController
         }
 
         $view = 'voyager::bread.browse';
-
+        $requestData = $request->all();
         if (view()->exists("voyager::$slug.browse")) {
             $view = "voyager::$slug.browse";
         }
 
-        $authId = Auth::user()->id;
-        $sqlQuery = "select  id from (select * from users) users,(select @pv := $authId)
-                    initialisation where   find_in_set(parent_id, @pv) and 
-                    length(@pv := concat(@pv, ',', id))";
-        $results = DB::select(DB::raw($sqlQuery));
-        $results = array_map('current', $results);
-        array_push($results, Auth::user()->id);
-
+        $frontUsers = FrontUser::all();
         return Voyager::view($view, compact(
             'actions',
             'dataType',
@@ -191,7 +210,8 @@ class VoyagerFrontUserController extends VoyagerBaseController
             'usesSoftDeletes',
             'showSoftDeleted',
             'showCheckboxColumn',
-            'results'
+            'frontUsers',
+            'requestData'
         ));
     }
 
@@ -314,7 +334,6 @@ class VoyagerFrontUserController extends VoyagerBaseController
     // POST BR(E)AD
     public function update(Request $request, $id)
     {
-        $this->rules($request,$id); 
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -368,7 +387,6 @@ class VoyagerFrontUserController extends VoyagerBaseController
 
     public function create(Request $request)
     {
-
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -408,7 +426,6 @@ class VoyagerFrontUserController extends VoyagerBaseController
      */
     public function store(Request $request)
     {
-        $this->rules($request); 
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -886,18 +903,5 @@ class VoyagerFrontUserController extends VoyagerBaseController
 
         // No result found, return empty array
         return response()->json([], 404);
-    }
-
-    public static function rules(Request $request, $id= Null) {
-        return $request->validate([
-            'phone_number' => 'required|max:10|min:10|unique:front_users,phone_number,'.$id,
-            'voice_audio' => [new fileCheck($request->all())],
-        ],
-        [
-            'phone_number.required' => 'Phone Number is Required',
-            'phone_number.max' => 'Phone Number may not be greater than 10 characters.',
-            'phone_number.min' => 'Phone Number must be at least 10 characters.',
-            'phone_number.unique' => 'Phone Number is Unique',
-        ]);
     }
 }
