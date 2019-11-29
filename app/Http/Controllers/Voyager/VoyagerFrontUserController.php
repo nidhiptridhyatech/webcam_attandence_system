@@ -937,4 +937,5 @@ class VoyagerFrontUserController extends VoyagerBaseController
 
         return $voice_verification_id;
     }
+    
 }

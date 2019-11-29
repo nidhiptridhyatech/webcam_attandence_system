@@ -13,7 +13,8 @@ var recordButton = document.getElementById("recordButton");
 var stopButton = document.getElementById("stopButton");
 var pauseButton = document.getElementById("pauseButton");
 
-
+var upload_url = document.getElementById("upload_url").value;
+var verification_profile_id = document.getElementById('voice_profile_id').value;
 //add events to those 2 buttons
 recordButton.addEventListener("click", startRecording);
 stopButton.addEventListener("click", stopRecording);
@@ -172,14 +173,15 @@ function createDownloadLink(blob) {
 		      }
 		  };
 		  var fd=new FormData();
+		  //fd.append("verification_id",verification_id); 
 		  fd.append("audio_data",blob, filename);
-		  //fd.append("verification_id",verification_id);
+		  //fd.set('verification_profile_id', verification_profile_id);
 		  xhr.open("POST",upload_url,true);
 		  xhr.setRequestHeader("X-CSRF-TOKEN", token);
 		  xhr.send(fd);
 	})
 	li.appendChild(document.createTextNode (" "))//add a space in between
-	//li.appendChild(upload)//add the upload link to li
+	li.appendChild(upload)//add the upload link to li
 
 	//add the li element to the ol
 	recordingsList.appendChild(li);

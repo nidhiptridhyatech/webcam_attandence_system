@@ -125,28 +125,42 @@
                                         {{ __('voyager::generic.download') }}
                                     </a>
                                 @endif
+                            @elseif($row->field == 'voice_enrollment_status')
+                            @if($dataTypeContent->{$row->field} == 2)
+                            Enrolled
+                            @elseif($dataTypeContent->{$row->field} == 1)
+                            Enrolling
+                            @else
+                            Not Entolled
+                            @endif     
                             @else
                                 @include('voyager::multilingual.input-hidden-bread-read')
                                 <p>{{ $dataTypeContent->{$row->field} }}</p>
                             @endif
-                         
-                           @if($row->field == 'remaining_voice_enrollments' && $dataTypeContent->{$row->field}!=0) 
+                               
+                            
+                           @if($row->field == 'remaining_voice_enrollments' && $dataTypeContent->{$row->field}==0) 
                            <input class="btn btn-info" type="button" name="enroll_voice" id="enroll_voice" value="Enroll Voice">
                            <div id="panel">
+                               <form action="<{{url('/enroll-voice')}}" method="post">
+                               @csrf
                            <div class="form-group row">
-                            <label for="snap" class="col-md-4 col-form-label text-md-right">{{ __('Record Voice') }}</label>
+                            <label for="record" class="col-md-4 col-form-label text-md-right">{{ __('Record Voice') }}</label>
 
                             <div class="col-md-6">
 <div id="controls">
-  	 <button onclick="startRecording()" type="button" id="recordButton">Record</button>
-  	 <button onclick="pauseRecording()" type="button" id="pauseButton" style="display:none" disabled>Pause</button>
-  	 <button onclick="stopRecording()" type="button" id="stopButton" disabled>Stop</button>
+  	 <button type="button" id="recordButton">Record</button>
+  	 <button type="button" id="pauseButton" style="display:none" disabled>Pause</button>
+     <button type="button" id="stopButton" disabled>Stop</button>
+     <input type="hidden" name="upload_url" id="upload_url" value="{{url('/enroll-voice')}}">  
+     <input type="hidden" name="voice_profile_id" id="voice_profile_id" value="{{$dataTypeContent->voice_profile_id}}">
     </div>
     <!-- <div id="formats">Format: start recording to see sample rate</div> -->
   	<span>(*The audio file should be at least 1-second-long and no longer than 15 seconds)</span>
   	<ol id="recordingsList"></ol>
 </div>
 </div>
+                    </form>
 
                            </div>
                            @endif
@@ -185,7 +199,7 @@
 
 @section('javascript')
 <script type="text/javascript" src="{{asset('js/recorder.js')}}"></script>
-<script type="text/javascript" src="{{asset('js/recordapp.js')}}"></script>    
+<script type="text/javascript" src="{{asset('js/recordapp_backend.js')}}"></script>    
 
     @if ($isModelTranslatable)
         <script>
