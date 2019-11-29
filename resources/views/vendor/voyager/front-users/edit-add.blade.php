@@ -54,7 +54,7 @@
                             @php
                                 $dataTypeRows = $dataType->{($edit ? 'editRows' : 'addRows' )};
                             @endphp
-
+                            @php //echo "<pre>";print_R($dataTypeRows);exit;@endphp
                             @foreach($dataTypeRows as $row)
                                 <!-- GET THE DISPLAY OPTIONS -->
                                 @php
@@ -75,6 +75,18 @@
                                         @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => ($edit ? 'edit' : 'add')])
                                     @elseif($row->type == 'file1')
                                         <input type="file" name="voice_audio">
+                                    @elseif($row->field == 'front_user_belongsto_user_relationship' && (Auth::user()->role_id == 3 || Auth::user()->role_id == 4))
+                                        <select class="form-control select2-ajax select2-hidden-accessible" name="parent_id"  id="parent_id" >
+                                            @foreach($organationName as $key => $val)
+                                                <option value="{{$val->id}}">{{$val->name}}</option>
+                                            @endforeach
+                                        </select>
+                                    @elseif($row->field == 'front_user_belongsto_geofence_relationship' && (Auth::user()->role_id == 3 || Auth::user()->role_id == 4))
+                                        <select class="form-control select2-ajax select2-hidden-accessible" name="geofence_id"  id="geofence_id" >
+                                            @foreach($geofence as $key => $val)
+                                                <option value="{{$val->id}}">{{$val->address}}</option>
+                                            @endforeach
+                                        </select>
                                     @elseif ($row->type == 'relationship')
                                         @include('voyager::formfields.relationship', ['options' => $row->details])
                                     @else
@@ -164,6 +176,7 @@
         }
 
         $('document').ready(function () {
+            $('#parent_id,#geofence_id').select2({});
             $('.toggleswitch').bootstrapToggle();
 
             //Init datepicker for date fields if data-datepicker attribute defined
@@ -205,6 +218,18 @@
                 $('#confirm_delete_modal').modal('hide');
             });
             $('[data-toggle="tooltip"]').tooltip();
+            $('#parent_id').change(function() {
+                var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+                jQuery.ajax({
+                    url  : "{{url('/get/geofence')}}",
+                    type : "Get",
+                    data: {_token: CSRF_TOKEN,orgId:$('#parent_id').val()},
+                    success: function(response) {console.log(response);
+                         $("#geofence_id option").remove();
+                         $("#geofence_id").append("<option value='" + response.id + "'>" + response.address + "</option>");
+                    }
+                });
+            });
         });
     </script>
 @stop

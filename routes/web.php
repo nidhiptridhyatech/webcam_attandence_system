@@ -28,3 +28,4 @@ Route::group(['prefix' => 'admin'], function () {
 Route::match(['get', 'post'],'/make-attendance', 'AttendanceController@MakeAttendance')->name('make-attendance');
 Route::post('/enroll-voice', 'AttendanceController@EnrollVoice')->name('enroll-voice');
 Route::post('/get-user-location', 'AttendanceController@getUserLocation')->name('get-user-location');
+Route::get('/get/geofence','Voyager\VoyagerFrontUserController@getGeofence');

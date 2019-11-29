@@ -49,13 +49,13 @@
                                     </ul>
                                 </div>
                             @endif
-
                             <!-- Adding / Editing -->
                             @php
                                 $dataTypeRows = $dataType->{($edit ? 'editRows' : 'addRows' )};
                             @endphp
 
                             @foreach($dataTypeRows as $row)
+@php //echo "<pre>";print_R($row->field == 'geofence_belongsto_front_user_relationship'  && (Auth::user()->role_id == 3 || Auth::user()->role_id == 4));@endphp
                                 <!-- GET THE DISPLAY OPTIONS -->
                                 @php
                                     $display_options = $row->details->display ?? NULL;
@@ -73,12 +73,17 @@
                                     @include('voyager::multilingual.input-hidden-bread-edit-add')
                                     @if (isset($row->details->view))
                                         @include($row->details->view, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'action' => ($edit ? 'edit' : 'add')])
+                                    @elseif($row->field == 'geofence_belongsto_front_user_relationship'  && (Auth::user()->role_id == 3 || Auth::user()->role_id == 4))
+                                        <select class="form-control select2-ajax select2-hidden-accessible" name="user_id"  id="user_id" >
+                                            @foreach($organationName as $key => $val)
+                                                <option value="{{$val->id}}">{{$val->name}}</option>
+                                            @endforeach
+                                        </select>
                                     @elseif ($row->type == 'relationship')
                                         @include('voyager::formfields.relationship', ['options' => $row->details])
                                     @elseif($row->field == "address")
                                         <input  type="text" class="form-control" name="address" placeholder="Address" id="address" 
                                         value="{{$dataTypeContent->address }}">
-
                                     @else
                                         {!! app('voyager')->formField($row, $dataType, $dataTypeContent) !!}
                                     @endif
@@ -180,6 +185,7 @@
         }
 
         $('document').ready(function () {
+            $('#user_id').select2({});
             $('.toggleswitch').bootstrapToggle();
 
             //Init datepicker for date fields if data-datepicker attribute defined
