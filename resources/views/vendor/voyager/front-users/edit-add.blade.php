@@ -78,7 +78,7 @@
                                     @elseif($row->field == 'front_user_belongsto_user_relationship' && (Auth::user()->role_id == 3 || Auth::user()->role_id == 4))
                                         <select class="form-control select2-ajax select2-hidden-accessible" name="parent_id"  id="parent_id" >
                                             @foreach($organationName as $key => $val)
-                                                <option value="{{$val->id}}">{{$val->name}}</option>
+                                                <option value="{{$val->id}}" {{(Auth::user()->id == $val->id)?'selected':''}}>{{$val->name}}</option>
                                             @endforeach
                                         </select>
                                     @elseif($row->field == 'front_user_belongsto_geofence_relationship' && (Auth::user()->role_id == 3 || Auth::user()->role_id == 4))
