@@ -3,6 +3,7 @@
 /public/storage
 /public/images
 /public/login_audio
+/public/audio
 /storage/*.key
 /vendor
 .env

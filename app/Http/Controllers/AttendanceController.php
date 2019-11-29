@@ -9,6 +9,7 @@ use Validator;
 use App\FrontUser;
 use App\Attendance;
 use File;
+use Redirect;
 
 class AttendanceController extends Controller
 {
@@ -209,6 +210,61 @@ class AttendanceController extends Controller
             return $location;
             //print"<pre>";print_r($location); exit;
         } 
+    }
+    public function EnrollVoice(Request $request)
+    {
+//        print_r($request->verification_id);exit;
+        //uniqid();
+        //$request->verification_id = "164af3ab-9b70-4722-abbb-03d406520402";
+        $audio_file_path = public_path('audio/enroll/');
+        //echo $audio_file_path;exit;
+        $input = $_FILES['audio_data']['tmp_name']; //get the temporary name that PHP gave to the uploaded file 
+        //$output = $audio_file_path.$_FILES['audio_data']['name'].".wav"; //letting the client control the filename is a rather bad idea 
+        $filename = $audio_file_path.uniqid().".wav"; //letting the client control the filename is a rather bad idea 
+        //move the file from temp name to local folder using $output name 
+        move_uploaded_file($input, $filename);
+        //exit;
+        // $filename = public_path('login_audio/2019-11-26T10_47_49.389Z.wav');
+        $binary_content = file_get_contents($filename, true);
+        // $this->verifyVoice($binary_content);exit;
+        //voice verification code end
+
+        $voice_verification_id = '';
+        $headers = [
+            'Content-Type' => 'application/octet-stream',
+            'Ocp-Apim-Subscription-Key' => config('voiceapi.voice_subscription_key'),
+        ];
+        $body = $binary_content;
+        $client = new Client([
+            'headers' => $headers
+        ]);
+        try
+        {
+            $res = $client->request('POST', config('voiceapi.voice_api_endpoint').'verificationProfiles/'.$request->verification_profile_id.'/enroll', [
+                'body' => $body
+            ]);
+            
+            if ($res->getStatusCode() == 200) { // 200 OK
+                $response_data = json_decode($res->getBody()->getContents());
+                //print"<pre>";print_r($response_data);exit;
+                $enrollment_status = ($response_data->enrollmentStatus=='Enrolled' && $response_data->remainingEnrollments==0)?2:1;
+                FrontUser::where('voice_profile_id', $request->verification_id)->update(array('voice_enrollment_status' => $enrollment_status,'remaining_voice_enrollments' => $response_data->remainingEnrollments));
+                return Redirect::back()->with('message','Operation Successful !');
+
+                //$voice_verification_id = $response_data->verificationProfileId;
+            }
+        }
+        catch (\Exception $ex)
+        {
+            //remove uploaded audio 
+            $audio_path = $filename;  
+            if(File::exists($audio_path)) {
+            File::delete($audio_path);
+            }
+            print"<pre>";print_r($ex->getMessage());exit;   
+        }
+
+        return $voice_verification_id;
     }
     public function verifyVoice($binary_data,$verification_id)
     {

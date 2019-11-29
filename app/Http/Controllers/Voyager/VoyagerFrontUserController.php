@@ -950,4 +950,5 @@ class VoyagerFrontUserController extends VoyagerBaseController
         $geofence = \App\Geofence::where('user_id',$request->orgId)->select('id','address')->first();
         return $geofence;
     }
+    
 }
