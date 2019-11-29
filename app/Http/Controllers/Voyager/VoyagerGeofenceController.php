@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Voyager;
 
 use Exception;
@@ -20,7 +19,7 @@ use Illuminate\Validation\Rule;
 use App\Rules\fileCheck;
 use GuzzleHttp\Client;
 
-class VoyagerFrontUserController extends VoyagerBaseController
+class VoyagerGeofenceController extends VoyagerBaseController
 {
     use BreadRelationshipParser;
 
@@ -35,10 +34,9 @@ class VoyagerFrontUserController extends VoyagerBaseController
     //      Browse our Data Type (B)READ
     //
     //****************************************
-   
+
     public function index(Request $request)
     {
-        
         // GET THE SLUG, ex. 'posts', 'pages', etc.
         $slug = $this->getSlug($request);
 
@@ -170,14 +168,6 @@ class VoyagerFrontUserController extends VoyagerBaseController
             $view = "voyager::$slug.browse";
         }
 
-        $authId = Auth::user()->id;
-        $sqlQuery = "select  id from (select * from users) users,(select @pv := $authId)
-                    initialisation where   find_in_set(parent_id, @pv) and 
-                    length(@pv := concat(@pv, ',', id))";
-        $results = DB::select(DB::raw($sqlQuery));
-        $results = array_map('current', $results);
-        array_push($results, Auth::user()->id);
-
         return Voyager::view($view, compact(
             'actions',
             'dataType',
@@ -192,8 +182,7 @@ class VoyagerFrontUserController extends VoyagerBaseController
             'defaultSearchKey',
             'usesSoftDeletes',
             'showSoftDeleted',
-            'showCheckboxColumn',
-            'results'
+            'showCheckboxColumn'
         ));
     }
 
@@ -253,7 +242,7 @@ class VoyagerFrontUserController extends VoyagerBaseController
         if (view()->exists("voyager::$slug.read")) {
             $view = "voyager::$slug.read";
         }
-        
+
         return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'isSoftDeleted'));
     }
 
@@ -316,7 +305,6 @@ class VoyagerFrontUserController extends VoyagerBaseController
     // POST BR(E)AD
     public function update(Request $request, $id)
     {
-        $this->rules($request,$id); 
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -396,14 +384,11 @@ class VoyagerFrontUserController extends VoyagerBaseController
         if (view()->exists("voyager::$slug.edit-add")) {
             $view = "voyager::$slug.edit-add";
         }
-        
-        $organationName = $geofence ='';
+        $organationName = '';
         if(Auth::user()->role_id == 3 || Auth::user()->role_id == 4){
             $organationName = \App\User::where('id',Auth::user()->parent_id)->orWhere('parent_id',Auth::user()->parent_id)->select('name','id')->get();
-            $geofence = \App\Geofence::where('user_id',Auth::user()->id)->select('id','address')->get();
         }
-//echo "<pre>";print_R($geofence);exit;
-        return Voyager::view($view, compact('dataType','geofence','dataTypeContent', 'isModelTranslatable','organationName'));
+        return Voyager::view($view, compact('dataType', 'organationName','dataTypeContent', 'isModelTranslatable'));
     }
 
     /**
@@ -415,7 +400,6 @@ class VoyagerFrontUserController extends VoyagerBaseController
      */
     public function store(Request $request)
     {
-        $this->rules($request); 
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -424,11 +408,7 @@ class VoyagerFrontUserController extends VoyagerBaseController
         $this->authorize('add', app($dataType->model_name));
 
         // Validate fields with ajax
-        //print"<pre>";print_r($dataType->addRows);exit;
         $val = $this->validateBread($request->all(), $dataType->addRows)->validate();
-        $voice_profile_id = $this->createVoiceProfile();
-        $request->merge(array('voice_profile_id' => $voice_profile_id));
-        //echo $request->voice_profile_id;exit;
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
 
         event(new BreadDataAdded($dataType, $data));
@@ -897,57 +877,5 @@ class VoyagerFrontUserController extends VoyagerBaseController
 
         // No result found, return empty array
         return response()->json([], 404);
-    }
-
-    public static function rules(Request $request, $id= Null) {
-        return $request->validate([
-            'phone_number' => 'required|max:10|min:10|unique:front_users,phone_number,'.$id,
-            'adhar_no' => 'required|max:12|min:12|unique:front_users,adhar_no,'.$id,
-            'voice_audio' => [new fileCheck($request->all())],
-        ],
-        [
-            'phone_number.required' => 'Phone Number is Required',
-            'phone_number.max' => 'Phone Number may not be greater than 10 characters.',
-            'phone_number.min' => 'Phone Number must be at least 10 characters.',
-            'adhar_no.max' => 'Adhaar no may not be greater than 12 digit.',
-            'adhar_no.min' => 'Adhaar no must be at least 12 digit.',
-            'phone_number.unique' => 'Phone Number is Unique',
-        ]);
-    }
-
-    public function createVoiceProfile()
-    {
-        $voice_verification_id = '';
-        $headers = [
-            'Content-Type' => 'application/json',
-            'Ocp-Apim-Subscription-Key' => config('voiceapi.voice_subscription_key'),
-        ];
-        $body = '{
-            "locale":"en-us",
-          }';
-        $client = new Client([
-            'headers' => $headers
-        ]);
-        try
-        {
-            $res = $client->request('POST', config('voiceapi.voice_api_endpoint').'verificationProfiles', [
-                'body' => $body
-            ]);
-            
-            if ($res->getStatusCode() == 200) { // 200 OK
-                $response_data = json_decode($res->getBody()->getContents());
-                $voice_verification_id = $response_data->verificationProfileId;
-            }
-        }
-        catch (\Exception $ex)
-        {
-            print"<pre>";print_r($ex->getMessage());exit;   
-        }
-
-        return $voice_verification_id;
-    } 
-    public function getGeofence(Request $request) {
-        $geofence = \App\Geofence::where('user_id',$request->orgId)->select('id','address')->first();
-        return $geofence;
     }
 }
