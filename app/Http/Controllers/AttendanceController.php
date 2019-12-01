@@ -65,10 +65,7 @@ class AttendanceController extends Controller
             $fuser = $existingUser[0];
             //check if the attendance exist for user
             $existing_attendance = Attendance::where('front_user_id',$fuser['id'])->whereDate('created_at', '=', date('Y-m-d'))->count();
-            if($existing_attendance > 0)
-            {
-                return redirect()->back()->with('info', $fuser['first_name'].' '.$fuser['last_name'].', Your attendance for today has already been made.');            
-            }
+            
             //verify face using face API
             if(isset($fuser['avatar']))
             {
@@ -97,6 +94,10 @@ class AttendanceController extends Controller
                 }
                 if($user_verified == 1)
                 {
+                    if($existing_attendance > 0)
+                    {
+                        return redirect()->back()->with('info', $fuser['first_name'].' '.$fuser['last_name'].', Your attendance for today has already been made.');            
+                    }
                     //make attendance logic 
                     $attendance = Attendance::create([
                         'front_user_id' => $fuser['id'],
