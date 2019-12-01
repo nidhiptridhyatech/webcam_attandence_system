@@ -39,7 +39,7 @@ class AttendanceController extends Controller
             $existingUser = FrontUser::select('front_users.*','geofences.latitude','geofences.longitude','geofences.radius')->where('front_users.deleted_at',NULL)->where('front_users.phone_number',$request->phone_number)->leftjoin('geofences','front_users.geofence_id','=','geofences.id')->get()->toArray();
             if(empty($existingUser))
             {
-                return redirect()->back()->with('error', 'Mobile No. does not match our records.');            
+                return redirect()->back()->with('error', 'Mobile No. does not match our records.')->withInput($request->all());            
             }
             //get current location for employee.
             $login_latitude = $_POST['login_lati'];
@@ -117,7 +117,7 @@ class AttendanceController extends Controller
                     if(File::exists($image_path)) {
                     File::delete($image_path);
                     }
-                   return redirect()->back()->with('error', 'Face not verified! Please try again.');   
+                   return redirect()->back()->with('error', 'Face not verified! Please try again.')->withInput($request->all());   
                }
            
             }
