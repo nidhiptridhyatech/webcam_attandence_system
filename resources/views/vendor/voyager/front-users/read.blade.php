@@ -198,8 +198,8 @@
 @stop
 
 @section('javascript')
-<script type="text/javascript" src="{{asset('js/recorder.js')}}"></script>
-<script type="text/javascript" src="{{asset('js/recordapp_backend.js')}}"></script>    
+<!-- <script type="text/javascript" src="{{asset('js/recorder.js')}}"></script>
+<script type="text/javascript" src="{{asset('js/recordapp_backend.js')}}"></script>     -->
 
     @if ($isModelTranslatable)
         <script>
@@ -209,11 +209,11 @@
         </script>
     @endif
     <script>
-        $(document).ready(function(){
-        $("#enroll_voice").click(function(){
-            $("#panel").slideDown("slow");
-        });
-        });
+        // $(document).ready(function(){
+        // $("#enroll_voice").click(function(){
+        //     $("#panel").slideDown("slow");
+        // });
+        // });
         var deleteFormAction;
         $('.delete').on('click', function (e) {
             var form = $('#delete_form')[0];
@@ -232,7 +232,7 @@
 
     </script>
 @stop
-@section('css')
+<!-- @section('css')
 <link rel="stylesheet" type="text/css" href="{{asset('css/recordstyle.css')}}">
 
 <style> 
@@ -248,4 +248,4 @@
   display: none;
 }
 </style>
-@stop
+@stop -->

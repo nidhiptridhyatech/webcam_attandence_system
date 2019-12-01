@@ -426,9 +426,10 @@ class VoyagerFrontUserController extends VoyagerBaseController
         // Validate fields with ajax
         //print"<pre>";print_r($dataType->addRows);exit;
         $val = $this->validateBread($request->all(), $dataType->addRows)->validate();
-        $voice_profile_id = $this->createVoiceProfile();
-        $request->merge(array('voice_profile_id' => $voice_profile_id));
-        //echo $request->voice_profile_id;exit;
+        //Generate voice profile for user
+        // $voice_profile_id = $this->createVoiceProfile();
+        // $request->merge(array('voice_profile_id' => $voice_profile_id));
+        
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
 
         event(new BreadDataAdded($dataType, $data));

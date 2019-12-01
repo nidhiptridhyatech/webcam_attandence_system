@@ -23,84 +23,93 @@ class AttendanceController extends Controller
             // $this->verifyVoice($binary_content);exit;
             //voice verification code end
             $validator = Validator::make($request->all(), [
-               // 'phone_number' => 'required|numeric|size:10',
+                'phone_number' => 'required|digits:10',
                 'image' => 'required',
-            ]);
+            ],
+            [
+                'phone_number.required' => 'Mobile No. is required to make attendance.',
+                'image.required' => 'Please provide snapshot to make attendance.',
+                'phone_number.digits' => 'Please enter valid Mobile No.'
+            ]    
+            );
             if ($validator->fails()) {
-                return redirect()->back()->withErrors(['image' => 'Please provide snapshot to make attendance.']);
+                return redirect()->back()->withErrors($validator)->withInput($request->all());
             }
-            $frontUsers = FrontUser::select('front_users.*','geofences.latitude','geofences.longitude','geofences.radius')->where('front_users.deleted_at',NULL)->leftjoin('geofences','front_users.geofence_id','=','geofences.id')->get()->toArray();
-            //print"<pre>";print_r($frontUsers);exit;
-            if(!empty($frontUsers))
+            //check for existing user based on mobile
+            $existingUser = FrontUser::select('front_users.*','geofences.latitude','geofences.longitude','geofences.radius')->where('front_users.deleted_at',NULL)->where('front_users.phone_number',$request->phone_number)->leftjoin('geofences','front_users.geofence_id','=','geofences.id')->get()->toArray();
+            if(empty($existingUser))
             {
-                $login_latitude = $_POST['login_lati'];
-                $login_longitude = $_POST['login_long'];
-                $login_address = $this->getUserLocation($login_latitude,$login_longitude);
-                //echo $login_latitude.'<br>'.$login_longitude;exit;
-                $img = $_POST['image'];
-                $webcam_path = "images/webcam/login/";
-                $folderPath = public_path($webcam_path);
-                $image_parts = explode(";base64,", $img);
-                $image_type_aux = explode("image/", $image_parts[0]);
-                $image_type = $image_type_aux[1];
+                return redirect()->back()->with('error', 'Mobile No. does not match our records.');            
+            }
+            //get current location for employee.
+            $login_latitude = $_POST['login_lati'];
+            $login_longitude = $_POST['login_long'];
+            $login_address = $this->getUserLocation($login_latitude,$login_longitude);
+            //get image fron snap taken by webcam
+            $img = $_POST['image'];
+            $webcam_path = "images/webcam/login/";
+            $folderPath = public_path($webcam_path);
+            $image_parts = explode(";base64,", $img);
+            $image_type_aux = explode("image/", $image_parts[0]);
+            $image_type = $image_type_aux[1];
+        
+            $image_base64 = base64_decode($image_parts[1]);
+            $fileName = uniqid() . '.png';
+        
+            $file = $folderPath . $fileName;
+            file_put_contents($file, $image_base64);
+            $avatar = $webcam_path.$fileName;
+            $avatar_url = url('/'.$avatar);
+            $is_verified = false;
+            $user_verified = 0;
+            $fuser = $existingUser[0];
+            //check if the attendance exist for user
+            $existing_attendance = Attendance::where('front_user_id',$fuser['id'])->whereDate('created_at', '=', date('Y-m-d'))->count();
+            if($existing_attendance > 0)
+            {
+                return redirect()->back()->with('info', $fuser['first_name'].' '.$fuser['last_name'].', Your attendance for today has already been made.');            
+            }
+            //verify face using face API
+            if(isset($fuser['avatar']))
+            {
+            // $login_face_url = "https://content-static.upwork.com/uploads/2014/10/01073427/profilephoto1.jpg";
+            // $front_face_url = "https://content-static.upwork.com/uploads/2014/10/01073427/profilephoto1.jpg";     
+            $login_face_url = $avatar_url;
+            $front_face_url = url('/storage/'.$fuser['avatar']);
+            $login_face_id = $this->getFaceIdFromImage($login_face_url);
+            $front_face_id = $this->getFaceIdFromImage($front_face_url);
             
-                $image_base64 = base64_decode($image_parts[1]);
-                $fileName = uniqid() . '.png';
-            
-                $file = $folderPath . $fileName;
-                file_put_contents($file, $image_base64);
-                $avatar = $webcam_path.$fileName;
-                $avatar_url = url('/'.$avatar);
-                $is_verified = false;
-                $user_verified = 0;
-               foreach($frontUsers as $f=>$fuser)
-               {
-                    $existing_attendance = Attendance::where('front_user_id',$fuser['id'])->whereDate('created_at', '=', date('Y-m-d'))->count();
-                    if($existing_attendance > 0)
+            $is_verified = $this->verifyFaces($login_face_id,$front_face_id);
+            if($is_verified == true)
+            {
+                $user_verified = 1;
+                if(isset($fuser['latitude']) && isset($fuser['longitude']))
+                {
+                    $radius = isset($fuser['radius'])?$fuser['radius']:setting('site.allowed_radius');
+                    $geofence_latitude = $fuser['latitude'];
+                    $geofence_longitude = $fuser['longitude'];
+                    $login_radius = $this->getDistance($login_latitude,$login_longitude,$geofence_latitude,$geofence_longitude);
+                    if($login_radius>$radius)
                     {
-                        return redirect()->back()->with('info', $fuser['first_name'].' '.$fuser['last_name'].', Your attendance for today has already been made.');            
+                        $user_verified = 0;
+                        return redirect()->back()->with('error','You can not make attendance from this location.');           
                     }
-                    
-                    if(isset($fuser['avatar']))
-                    {
-                    // $login_face_url = "https://content-static.upwork.com/uploads/2014/10/01073427/profilephoto1.jpg";
-                    // $front_face_url = "https://content-static.upwork.com/uploads/2014/10/01073427/profilephoto1.jpg";     
-                    $login_face_url = $avatar_url;
-                    $front_face_url = url('/storage/'.$fuser['avatar']);
-                    $login_face_id = $this->getFaceIdFromImage($login_face_url);
-                    $front_face_id = $this->getFaceIdFromImage($front_face_url);
-                    
-                    $is_verified = $this->verifyFaces($login_face_id,$front_face_id);
-                    if($is_verified == true)
-                    {
-                        $user_verified = 1;
-                        if(isset($fuser['latitude']) && isset($fuser['longitude']))
-                        {
-                            $radius = isset($fuser['radius'])?$fuser['radius']:setting('site.allowed_radius');
-                            $geofence_latitude = $fuser['latitude'];
-                            $geofence_longitude = $fuser['longitude'];
-                            $login_radius = $this->getDistance($login_latitude,$login_longitude,$geofence_latitude,$geofence_longitude);
-                            if($login_radius>$radius)
-                            {
-                                $user_verified = 0;
-                                return redirect()->back()->withErrors(['image' => 'You can not make attendance from this location.']);            
-                            }
-                        }
-                        if($user_verified == 1)
-                        {
-                            //make attendance logic 
-                            $attendance = Attendance::create([
-                                'front_user_id' => $fuser['id'],
-                                'login_latitude' => $login_latitude,
-                                'login_longitude' => $login_longitude,
-                                'login_address' => $login_address,
-                                'login_image' => $avatar,
-                            ]);
-                            return redirect()->back()->withSuccess($fuser['first_name'].' '.$fuser['last_name'].', your attendance has been made successfully!');
-                        }
-                    }
-                   }
-               } 
+                }
+                if($user_verified == 1)
+                {
+                    //make attendance logic 
+                    $attendance = Attendance::create([
+                        'front_user_id' => $fuser['id'],
+                        'login_latitude' => $login_latitude,
+                        'login_longitude' => $login_longitude,
+                        'login_address' => $login_address,
+                        'login_image' => $avatar,
+                    ]);
+                    return redirect()->back()->withSuccess($fuser['first_name'].' '.$fuser['last_name'].', your attendance has been made successfully!');
+                }
+                }
+                }
+               
                if($user_verified == 0)
                {
                    //remove uploaded image from login attempt 
@@ -108,9 +117,9 @@ class AttendanceController extends Controller
                     if(File::exists($image_path)) {
                     File::delete($image_path);
                     }
-                   return redirect()->back()->withErrors(['image' => 'Face not verified! Please try again.']);   
+                   return redirect()->back()->with('error', 'Face not verified! Please try again.');   
                }
-            }
+           
             }
             return view("attendance");
     }

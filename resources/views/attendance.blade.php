@@ -10,7 +10,7 @@
 
     span.label{ font-weight: bold; color: #000;} 
 </style>
-<link rel="stylesheet" type="text/css" href="{{asset('css/recordstyle.css')}}">
+<!-- <link rel="stylesheet" type="text/css" href="{{asset('css/recordstyle.css')}}"> -->
 <script type="text/javascript" src="{{asset('js/webcamjs/webcam.min.js')}}"></script>    
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script> 
 
@@ -97,22 +97,34 @@ function saveSnap(){
                             <strong>Success!</strong> {{session('success')}}
                             </div>
                         @endif
-                        @error('image')
+                        @if(session('error'))
                             <div class="alert alert-danger">
-                            <strong>Sorry!</strong> {{ $message }}
+                            <strong>Sorry!</strong> {{session('error')}}
                             </div>
-                        @enderror
+                        @endif
                         <div class="form-group row">
                             <label for="snap" class="col-md-4 col-form-label text-md-right">{{ __('Mobile No.') }}</label>
 
                             <div class="col-md-6">
-                                <input type="number" name="phone_number" id="phone_number" required>
+                            @error('phone_number')
+                            <div class="text-danger">
+                            {{ $message }}
+                            </div>
+                        @enderror
+                        
+                                <input type="number" name="phone_number" id="phone_number" value="{{ old('phone_number') }}" required>
                             </div>    
                         </div>    
                         <div class="form-group row">
                             <label for="snap" class="col-md-4 col-form-label text-md-right">{{ __('Take Snapshot') }}</label>
 
                             <div class="col-md-6">
+                            @error('image')
+                            <div class="text-danger">
+                            {{ $message }}
+                            </div>
+                            @enderror
+                            
                             <!-- @error('image')
                                     <span class="text-danger" role="alert">
                                         <strong>{{ $message }}</strong>
@@ -137,8 +149,8 @@ function saveSnap(){
                             <div id="results" ></div>
                             </div>
                          </div>   
-                         
-<div class="form-group row">
+<!-- voice verification code  -->
+<!-- <div class="form-group row">
                             <label for="snap" class="col-md-4 col-form-label text-md-right">{{ __('Record Voice') }}</label>
 
                             <div class="col-md-6">
@@ -147,11 +159,11 @@ function saveSnap(){
   	 <button onclick="pauseRecording()" type="button" id="pauseButton" style="display:none" disabled>Pause</button>
   	 <button onclick="stopRecording()" type="button" id="stopButton" disabled>Stop</button>
     </div>
-    <!-- <div id="formats">Format: start recording to see sample rate</div> -->
+    <div id="formats">Format: start recording to see sample rate</div>
   	<span>(*The audio file should be at least 1-second-long and no longer than 15 seconds)</span>
   	<ol id="recordingsList"></ol>
 </div>
-</div>
+</div> -->
                         <div class="form-group row mb-0">
                             <div class="col-md-6 offset-md-4">
                             
@@ -167,8 +179,8 @@ function saveSnap(){
     </div>
 </div>
 <!-- <script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script> -->
-<script type="text/javascript" src="{{asset('js/recorder.js')}}"></script>
-<script type="text/javascript" src="{{asset('js/recordapp.js')}}"></script>    
+<!-- <script type="text/javascript" src="{{asset('js/recorder.js')}}"></script>
+<script type="text/javascript" src="{{asset('js/recordapp.js')}}"></script>     -->
 
 @endsection
 
