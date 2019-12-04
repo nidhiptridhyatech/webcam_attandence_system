@@ -25,6 +25,7 @@ Route::group(['prefix' => 'admin'], function () {
     
 });
 //Route::get('/make-attendance', 'AttendanceController@MakeAttendance')->name('make-attendance');
+
 Route::match(['get', 'post'],'/make-attendance', 'AttendanceController@MakeAttendance')->name('make-attendance');
 Route::match(['get', 'post'],'/make-enrollment', 'EnrollmentController@MakeEnrollment')->name('make-enrollment');
 Route::post('/enroll-voice', 'AttendanceController@EnrollVoice')->name('enroll-voice');
