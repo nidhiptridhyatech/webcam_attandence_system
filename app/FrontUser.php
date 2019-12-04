@@ -13,6 +13,6 @@ class FrontUser extends Model
      * @var array
      */
     protected $fillable = [
-        'voice_enrollment_status','remaining_voice_enrollments',
+        'parent_id','first_name','last_name','phone_number','avatar','adhar_no','geofence_id','voice_enrollment_status','remaining_voice_enrollments',
     ];
 }
