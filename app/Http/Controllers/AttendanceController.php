@@ -57,7 +57,7 @@ class AttendanceController extends Controller
             $fileName = uniqid() . '.png';
         
             $file = $folderPath . $fileName;
-            echo $fileName;exit;
+            //echo $fileName;exit;
             file_put_contents($file, $image_base64);
             $avatar = $webcam_path.$fileName;
             $avatar_url = url('/'.$avatar);
